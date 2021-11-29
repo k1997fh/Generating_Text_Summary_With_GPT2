@@ -4,7 +4,7 @@ import os
 import time
 
 import numpy as np
-from transformers import GPT2LMHeadModel,AdamW, WarmupLinearSchedule
+from pytorch_transformers import ConstantLRSchedule, GPT2Config, GPT2LMHeadModel,AdamW, GPT2Tokenizer, WarmupLinearSchedule
 from torch.utils.tensorboard import SummaryWriter
 import torch
 from torch.nn import CrossEntropyLoss
@@ -66,7 +66,7 @@ def train(args, model, tokenizer, train_dataset, valid_dataset, ignore_index):
                 print("loss:", loss.item(), end='\n\n')
                 if (step + 1)/args.gradient_accumulation_steps == 1.0:
                 	print('After 1st update: ', end='\n\n')
-                	generate_sample(valid_dataset, tokenizer, num=2, eval_step=False,device=args.device)
+                	generate_sample(valid_dataset, tokenizer, model, num=2, eval_step=False,device=args.device)
                 
                 
             if (step + 1) % (10*args.gradient_accumulation_steps) == 0:
@@ -74,7 +74,7 @@ def train(args, model, tokenizer, train_dataset, valid_dataset, ignore_index):
                 for key, value in results.items():
                     writer.add_scalar('eval_{}'.format(key), value, global_step)
                 print('After', global_step+1,'updates: ', end='\n\n')
-                generate_sample(valid_dataset, tokenizer, num=2, eval_step=True,device=args.device)
+                generate_sample(valid_dataset, tokenizer, model, num=2, eval_step=True,device=args.device)
                     
      
 
@@ -122,7 +122,7 @@ def evaluate(args, model, eval_dataset, ignore_index, global_step=None):
     print("perplexity:", perplexity.item())
 
     if global_step:
-    	output_eval_file = os.path.join(eval_output_dir, "eval_results.txt")
+        output_eval_file = os.path.join(eval_output_dir, "eval_results.txt")
         with open(output_eval_file, "a") as f:
             for key in sorted(result.keys()):
                 f.write('\n\n')
